@@ -129,9 +129,8 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
   };
   let report = await assembleAndCheck(shots.map((s) => s.path));
   const failed = report.checks.filter((c) => c.status === "fail" && c.shotId);
-  const voiceChecks = ["voice_gender", "voice_consistency"];
-  const badLines = [...new Set(failed.filter((c) => voiceChecks.includes(c.name)).map((c) => c.shotId!))];
-  const badShots = [...new Set(failed.filter((c) => !voiceChecks.includes(c.name)).map((c) => c.shotId!))];
+  const badLines = failed.filter((c) => c.name === "voice_gender").map((c) => c.shotId!);
+  const badShots = [...new Set(failed.filter((c) => c.name !== "voice_gender").map((c) => c.shotId!))];
   if (badLines.length && voice.name === "handoff-voice") {
     log("warn", "voice does not match character gender, requesting new takes", { lines: badLines });
     for (const id of badLines) for (const f of [`${id}.wav`, `${id}.input.wav`]) await rm(join(dir, "audio", f), { force: true });

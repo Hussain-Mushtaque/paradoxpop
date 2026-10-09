@@ -4,6 +4,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { integratedLufs, normalizeLoudness } from "../src/assemble.ts";
 import { medianPitchHz, pcm } from "../src/audio.ts";
 import { direct } from "../src/director.ts";
 import { mockVoice } from "../src/providers/voice.ts";
@@ -71,6 +72,21 @@ test("pitch tells the female voice from the male voice", { skip: process.platfor
   };
   assert.ok((await hz("Samantha")) >= 165, "Samantha should read female");
   assert.ok((await hz("Ralph")) <= 155, "Ralph should read male");
+});
+
+test("loudness reaches target on sparse, peak-normalised speech", { skip: process.platform !== "darwin" }, async () => {
+  const dir = await mkdtemp(join(tmpdir(), "loud-"));
+  const input = join(dir, "sparse.mp4");
+  // Short lines 5 s apart in a 20 s mix, peaks at full scale: the mix that stopped at -16.2 LUFS for Muse.
+  const lines = ["That's my sandwich.", "It says Priya. In pen.", "Give. It. Back.", "Worth it."];
+  lines.forEach((t, i) => execFileSync("say", ["-v", i % 2 ? "Ralph" : "Samantha", "-o", join(dir, `l${i}.aiff`), t]));
+  const placed = lines.map((_, i) => `[${i}:a]aresample=48000,adelay=${i * 5000}:all=1[d${i}]`).join(";");
+  execFileSync("ffmpeg", ["-v", "error", ...lines.flatMap((_, i) => ["-i", join(dir, `l${i}.aiff`)]),
+    "-filter_complex", `${placed};${lines.map((_, i) => `[d${i}]`).join("")}amix=inputs=4:normalize=0,apad=whole_dur=20,atrim=duration=20,dynaudnorm=p=0.99:m=100:g=301,alimiter=limit=0.99[m]`,
+    "-map", "[m]", "-c:a", "aac", input]);
+  await normalizeLoudness(input, join(dir, "out.mp4"));
+  const lufs = await integratedLufs(join(dir, "out.mp4"));
+  assert.ok(Math.abs(lufs - -14) <= 0.5, `got ${lufs} LUFS`);
 });
 
 test("mock pipeline renders a 9:16 scene that passes every measurable QC check", { timeout: 300_000 }, async () => {

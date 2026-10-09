@@ -67,15 +67,32 @@ export async function assemble(plans: RenderPlan[], shotPaths: string[], sp: Scr
     mixPath,
   ]);
 
-  // Two-pass loudness normalisation: single-pass loudnorm undershoots on clips this short.
-  const target = `I=${config.loudnessLufs}:TP=-1.5:LRA=11`;
-  const stats = await ffmpegStderr(["-i", mixPath, "-af", `loudnorm=${target}:print_format=json`, "-f", "null", "-"]);
-  const m = JSON.parse(stats.slice(stats.lastIndexOf("{"), stats.lastIndexOf("}") + 1)) as Record<string, string>;
-  await ffmpeg([
-    "-i", mixPath, "-map", "0",
-    "-af", `loudnorm=${target}:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true,aresample=48000`,
-    "-c:v", "copy", "-c:s", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", outPath,
-  ]);
+  await normalizeLoudness(mixPath, outPath);
   await rm(mixPath);
   return { path: outPath, durationSec: total };
+}
+
+export async function integratedLufs(path: string, filters = "anull"): Promise<number> {
+  const stderr = await ffmpegStderr(["-i", path, "-vn", "-af", `${filters},ebur128=framelog=quiet`, "-f", "null", "-"]);
+  return Number(stderr.match(/I:\s+(-?[\d.]+) LUFS/)?.[1]);
+}
+
+const PEAK_LIMIT = 10 ** (-1.5 / 20);
+const gainAndLimit = (gainDb: number) => `volume=${gainDb.toFixed(2)}dB,alimiter=limit=${PEAK_LIMIT.toFixed(4)}:level=false:attack=2:release=50`;
+
+/**
+ * Gain plus a peak limiter, measured and corrected until it lands on target. loudnorm's linear mode
+ * refuses to raise sparse, peaky speech past its peak ceiling and silently stops ~2 LU short.
+ */
+export async function normalizeLoudness(input: string, output: string) {
+  let gainDb = config.loudnessLufs - (await integratedLufs(input));
+  for (let pass = 0; pass < 4; pass++) {
+    const miss = config.loudnessLufs - (await integratedLufs(input, gainAndLimit(gainDb)));
+    if (Math.abs(miss) <= 0.2) break;
+    gainDb += miss;
+  }
+  await ffmpeg([
+    "-i", input, "-map", "0", "-af", `${gainAndLimit(gainDb)},aresample=48000`,
+    "-c:v", "copy", "-c:s", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", output,
+  ]);
 }

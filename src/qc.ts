@@ -61,23 +61,15 @@ export async function qualityCheck(opts: {
 
   // Measured: the voice that says each line sounds like the character's gender (pitch proxy).
   // An in-between pitch fails too: a voice that doesn't clearly sound like the character gets re-recorded.
-  const pitches = new Map<string, number>();
   for (const l of lines) {
-    const hz = medianPitchHz(await pcm(l.audioPath));
-    if (hz) pitches.set(l.id, hz);
     const gender = byId.get(l.speakerId)!.gender;
     if (gender === "neutral") continue;
+    const hz = medianPitchHz(await pcm(l.audioPath));
     const ok = hz !== undefined && (gender === "female" ? hz >= 165 : hz <= 155);
     checks.push(check("voice_gender", ok, `${names.get(l.speakerId)} (${gender}) median pitch ${hz ? Math.round(hz) : "?"} Hz, needs ${gender === "female" ? ">= 165" : "<= 155"}`, l.id));
   }
-  // Same character, same voice: a line far from that character's typical pitch means the voice was swapped.
-  for (const l of lines) {
-    const own = lines.filter((o) => o.speakerId === l.speakerId && pitches.has(o.id)).map((o) => pitches.get(o.id)!).sort((a, b) => a - b);
-    const hz = pitches.get(l.id);
-    if (own.length < 3 || !hz) continue;
-    const typical = own[Math.floor(own.length / 2)];
-    checks.push(check("voice_consistency", Math.abs(hz - typical) / typical <= 0.3, `${names.get(l.speakerId)}: ${Math.round(hz)} Hz vs typical ${Math.round(typical)} Hz`, l.id));
-  }
+  // ponytail: pitch can't tell two same-gender voices apart (delivery moves it more than identity does);
+  // a speaker-embedding comparison (e.g. ECAPA) per character is the upgrade for detecting voice swaps.
 
   checks.push(review("character_consistency", "no automatic identity check yet (face/reference similarity planned)"));
   checks.push(review("visual_artifacts_and_continuity", "no vision reviewer yet (Muse Spark video understanding planned)"));

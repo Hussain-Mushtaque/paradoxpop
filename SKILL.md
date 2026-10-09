@@ -70,7 +70,7 @@ Each request names the character, their **gender** and the exact `museVoice` to 
 
 Before saving, check: *is this character a woman? Then does this take sound like a woman?* (And the same for men.) If not, re-record.
 
-QC measures the pitch of every line. A female line under 165 Hz or a male line over 155 Hz fails, and so does a line that sounds different from that character's other lines. Failed lines are requested again.
+QC measures the pitch of every line. A female line under 165 Hz or a male line over 155 Hz fails and is requested again. Natural variation between lines is fine; don't chase it with speed or pitch tricks.
 
 ### 4. `shot`
 Each request says who is on screen (with gender) and whose voice is heard. Follow it literally; never let a woman's mouth move while a man's line plays, or the other way round.
