@@ -12,6 +12,7 @@ const { values } = parseArgs({
 });
 
 if (!/^[a-z0-9-]+$/.test(values.project)) throw new Error("--project must be lowercase letters, digits and dashes");
+if (process.env.PARADOXPOP_LLM === "file" && !process.argv.some((a) => a.startsWith("--idea"))) throw new Error("--idea is required: pass the concept you decided on");
 const [min, max] = values.target.split("-").map(Number);
 if (!(min > 0 && max >= min)) throw new Error("--target must look like 20-30");
 

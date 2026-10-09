@@ -1,6 +1,6 @@
 ---
 name: paradoxpop-film
-description: Make a ParadoxPop vertical mini-movie where characters talk to each other on screen. Use whenever the user asks for a ParadoxPop film, scene, short or dialogue video. This repo plans the film, tells you exactly which voice lines and clips to make, then assembles and quality-checks them.
+description: Make a ParadoxPop vertical mini-movie where characters talk to each other on screen. Use whenever the user asks for a ParadoxPop film, scene, short or dialogue video. You research and decide what to make; this repo then plans the shots, tells you exactly which voice lines and clips to make, and assembles and quality-checks them.
 ---
 
 # ParadoxPop film skill
@@ -16,6 +16,17 @@ cd ~/paradoxpop && ./scripts/setup-linux.sh
 
 `PARADOXPOP_GITHUB_TOKEN` comes from the Secure Credentials Store (read-only token for this repo). Never print it, never write it to a file. Later updates: `git -C ~/paradoxpop pull`.
 
+## Step 0: decide what to make (your call)
+
+You choose the video. Research what is working right now for short vertical films on the target platform (YouTube Shorts, Reels): themes, hooks, pacing, length. Check what ParadoxPop has already made (`projects/*/screenplay.json`) so you don't repeat a premise. Then decide:
+- **Concept**: one or two sentences, original. No real people, no existing film characters or plots.
+- **Genre and tone**: anything, e.g. comedy, horror, sci-fi mystery, fantasy, drama.
+- **Length**: `--target` in seconds, e.g. `20-30` for a test scene, `70-80` for a full mini-movie.
+
+The repo's one fixed rule is that at least two characters talk to each other on screen. Everything else is up to you.
+
+Put your reasoning in the screenplay as a top-level `brief` object: `{ "platform", "audience", "format", "why", "sources" }`. It's kept with the project so results can later be compared with what was predicted.
+
 ## The loop
 
 Run this from `~/paradoxpop` with a lowercase project id, e.g. `kitchen-argument`:
@@ -23,8 +34,10 @@ Run this from `~/paradoxpop` with a lowercase project id, e.g. `kitchen-argument
 ```bash
 export PATH="$HOME/paradoxpop/.tools/bin:$PATH"
 PARADOXPOP_LLM=file PARADOXPOP_VOICE=handoff PARADOXPOP_VIDEO=handoff \
-  node --disable-warning=ExperimentalWarning src/cli.ts --project <id> --target 20-30
+  node --disable-warning=ExperimentalWarning src/cli.ts --project <id> --idea "<your concept>" --target <min-max>
 ```
+
+Use the same `--idea` and `--target` on every re-run of a project.
 
 - **Exit code 3** means it's waiting for files. Read `projects/<id>/handoff.json`, produce **every** request in it, save each to its exact `path`, then run the same command again.
 - **Exit code 0** means finished: `projects/<id>/final.mp4`, `final.srt` and `qc-report.json`.
