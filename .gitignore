@@ -1,0 +1,5 @@
+node_modules/
+projects/
+.env
+*.aiff
+.DS_Store

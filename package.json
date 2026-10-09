@@ -1,0 +1,17 @@
+{
+  "name": "paradoxpop",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "make": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/cli.ts",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^5.9.3"
+  }
+}
