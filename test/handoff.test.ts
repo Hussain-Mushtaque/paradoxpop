@@ -24,7 +24,22 @@ test("handoff loop: screenplay, then voices, then shots, then a finished film", 
   await writeFile(join(projects, "muse", "screenplay.input.json"), JSON.stringify(story));
 
   result = await run();
+  assert.ok(result.status === "waiting" && result.requests[0].kind === "casting", "voices are cast before any line is recorded");
+  const castingPath = join(projects, "muse", "casting.json");
+  // Casting mistakes: a man's voice in the female slot, and one voice for both slots.
+  await writeFile(castingPath, JSON.stringify({ female_a: { museVoice: "Deep Dan", gender: "male" }, male_a: { museVoice: "Deep Dan", gender: "male" } }));
+  result = await run();
+  const fix = result.status === "waiting" ? result.requests[0] : {};
+  assert.equal(fix.kind, "casting-fix");
+  assert.match(String(fix.errors), /female_a is for a female character but you cast a male voice/);
+  assert.match(String(fix.errors), /same museVoice/);
+  await writeFile(castingPath, JSON.stringify({ female_a: { museVoice: "Samantha", gender: "female" }, male_a: { museVoice: "Ralph", gender: "male" } }));
+
+  result = await run();
   assert.ok(result.status === "waiting" && result.requests.length === 5 && result.requests.every((r) => r.kind === "voice"));
+  const miraLine = result.status === "waiting" ? result.requests.find((r) => r.lineId === "l2")! : {};
+  assert.equal(miraLine.museVoice, "Samantha");
+  assert.match(String(miraLine.instructions), /Mira is FEMALE\. Record with your voice "Samantha" \(a WOMAN's voice\)/);
   // The classic mistake: Mira (female) is voiced by a man on line l2.
   for (const r of result.status === "waiting" ? result.requests : []) {
     const voice = r.lineId === "l2" ? "Ralph" : r.gender === "female" ? "Samantha" : "Ralph";
@@ -38,7 +53,10 @@ test("handoff loop: screenplay, then voices, then shots, then a finished film", 
   const sh03 = shotRequests.find((r) => r.shotId === "sh03")!;
   assert.equal(sh03.mode, "lipsync");
   assert.equal((sh03.drivingAudio as string[]).length, 1, "single face, single driving track");
-  assert.equal(shotRequests.find((r) => r.shotId === "sh04")!.mode, "voiceover", "two faces in frame are never lip-synced through Muse");
+  const sh04 = shotRequests.find((r) => r.shotId === "sh04")!;
+  assert.equal(sh04.mode, "voiceover", "two faces in frame are never lip-synced through Muse");
+  assert.match(String(sh04.instructions), /On screen: Mira \(FEMALE\), Vael \(MALE\)\. Heard in this shot: Vael \(MALE\)\. NOBODY's mouth moves/);
+  assert.match(String(sh03.instructions), /Mira \(FEMALE\) is the only face in frame/);
   for (const r of shotRequests) {
     execFileSync("ffmpeg", ["-v", "error", "-f", "lavfi", "-i", `testsrc2=size=720x1280:rate=24:duration=${Number(r.minDurationSec) + 0.5}`, "-pix_fmt", "yuv420p", String(r.path)]);
   }

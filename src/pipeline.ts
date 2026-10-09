@@ -7,7 +7,7 @@ import { config } from "./config.ts";
 import { openStore } from "./db.ts";
 import { direct } from "./director.ts";
 import { log } from "./log.ts";
-import { AwaitingInput } from "./providers/handoff.ts";
+import { AwaitingInput, requireCasting, type Casting } from "./providers/handoff.ts";
 import { llmFor } from "./providers/llm.ts";
 import { videoFor } from "./providers/video.ts";
 import { voiceFor } from "./providers/voice.ts";
@@ -79,10 +79,16 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
   const sp = store.loadDoc<Screenplay>(opts.projectId, "screenplay")!;
 
   // 2. Voices first: real dialogue timing drives shot length and audio-driven video.
+  let casting: Casting = {};
+  if (voice.name === "handoff-voice") {
+    const cast = await settle([requireCasting(sp, dir)]);
+    if (!cast) return handOff();
+    casting = cast[0];
+  }
   const voicedLines = await settle(sp.lines.map(async (line) => {
     const speaker = sp.characters.find((c) => c.id === line.speakerId)!;
     const out = await store.job({
-      projectId: opts.projectId, stage: "voice", provider: voice.name, input: [line.text, speaker.voice, line.style], estimateUsd: voice.estimateUsd(line.text), budget,
+      projectId: opts.projectId, stage: "voice", provider: voice.name, input: [line.text, speaker.voice, speaker.gender, casting[speaker.voice.voiceId], line.style], estimateUsd: voice.estimateUsd(line.text), budget,
       work: () => voice.synthesize(line, speaker, join(dir, "audio", `${line.id}.wav`)),
     });
     return [line.id, { audioPath: out.path, durationSec: out.durationSec }] as const;
@@ -107,7 +113,7 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
     const refs = plan.shot.characterIds.flatMap((id) => sp.characters.find((c) => c.id === id)!.referenceImages);
     return store.job({
       projectId: opts.projectId, stage: "shot", provider: video.name, input: [plan.prompt, plan.durationSec, plan.mode, plan.faces, refs], estimateUsd: video.estimateUsd(plan), budget,
-      work: () => video.generate({ plan, referenceImages: refs, faceTracks: faceTracks[i], outPath: join(dir, "shots", `${plan.shot.id}.mp4`) }),
+      work: () => video.generate({ plan, referenceImages: refs, faceTracks: faceTracks[i], characters: sp.characters, outPath: join(dir, "shots", `${plan.shot.id}.mp4`) }),
     });
   }));
   // ponytail: shots render concurrently with no cap; add a pool when a rate-limited provider is plugged in.
@@ -123,8 +129,9 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
   };
   let report = await assembleAndCheck(shots.map((s) => s.path));
   const failed = report.checks.filter((c) => c.status === "fail" && c.shotId);
-  const badLines = failed.filter((c) => c.name === "voice_gender").map((c) => c.shotId!);
-  const badShots = [...new Set(failed.filter((c) => c.name !== "voice_gender").map((c) => c.shotId!))];
+  const voiceChecks = ["voice_gender", "voice_consistency"];
+  const badLines = [...new Set(failed.filter((c) => voiceChecks.includes(c.name)).map((c) => c.shotId!))];
+  const badShots = [...new Set(failed.filter((c) => !voiceChecks.includes(c.name)).map((c) => c.shotId!))];
   if (badLines.length && voice.name === "handoff-voice") {
     log("warn", "voice does not match character gender, requesting new takes", { lines: badLines });
     for (const id of badLines) for (const f of [`${id}.wav`, `${id}.input.wav`]) await rm(join(dir, "audio", f), { force: true });

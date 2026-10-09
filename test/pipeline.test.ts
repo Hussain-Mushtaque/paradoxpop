@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { medianPitchHz, pcm } from "../src/audio.ts";
 import { direct } from "../src/director.ts";
 import { mockVoice } from "../src/providers/voice.ts";
-import { validateScreenplay } from "../src/screenplay.ts";
+import { genderContradiction, validateScreenplay } from "../src/screenplay.ts";
 import type { Screenplay, VideoCapabilities } from "../src/types.ts";
 
 const story = JSON.parse(await readFile(new URL("../stories/dragon-cave.json", import.meta.url), "utf8")) as Screenplay;
@@ -31,6 +31,16 @@ test("validation rejects a male voice on a female character and shared voices", 
   const errors = validateScreenplay(sp, [20, 30], mockVoice.voices);
   assert.ok(errors.some((e) => /mira is female but voice Ralph is male/.test(e)), errors.join());
   assert.ok(errors.includes("two characters share a voice"));
+});
+
+test("validation rejects a gender label that contradicts the description, and neutral on-camera speakers", () => {
+  const sp = structuredClone(story);
+  sp.characters[0].gender = "male";
+  sp.characters[0].voice.voiceId = "Daniel";
+  assert.ok(validateScreenplay(sp, [20, 30], mockVoice.voices).some((e) => /mira is male but is described as "woman"/.test(e)));
+  sp.characters[0].gender = "neutral";
+  assert.ok(validateScreenplay(sp, [20, 30], mockVoice.voices).some((e) => /mira speaks on camera.*not neutral/.test(e)));
+  assert.equal(genderContradiction("female", "woman, 19, his late father's compass"), undefined, "own-gender word present: no false alarm");
 });
 
 test("two-shot binds the line to the speaker's face only; the listener gets silence", () => {

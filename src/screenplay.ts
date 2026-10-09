@@ -23,6 +23,22 @@ export function storyUserPrompt(idea: string, targetSec: [number, number], voice
   return `Idea: ${idea}\nTarget runtime: ${targetSec[0]}-${targetSec[1]} seconds.\nAvailable voiceIds: ${catalog}.${references ? `\nFilmmaking references (techniques only, do not copy):\n${references}` : ""}`;
 }
 
+const GENDER_WORDS: Record<"female" | "male", RegExp> = {
+  female: /\b(woman|women|girl|female|lady|mother|daughter|queen|princess|grandmother|she|her)\b/i,
+  male: /\b(man|men|boy|male|gentleman|father|son|king|prince|grandfather|he|his|him)\b/i,
+};
+
+/**
+ * ponytail: keyword check that the description doesn't name the opposite gender (e.g. gender "male",
+ * appearance "woman, 30"). Catches the label slip that puts a male voice on a female face; it can't
+ * judge the generated image, which stays with human review.
+ */
+export function genderContradiction(gender: Gender, description: string): string | undefined {
+  if (gender === "neutral") return undefined;
+  const opposite = description.match(GENDER_WORDS[gender === "female" ? "male" : "female"])?.[0];
+  return opposite && !GENDER_WORDS[gender].test(description) ? opposite : undefined;
+}
+
 /** LLM output is untrusted: returns every structural problem so the caller can retry with feedback. */
 export function validateScreenplay(value: unknown, targetSec: [number, number], voices: VoiceCatalog): string[] {
   const sp = value as Screenplay;
@@ -41,6 +57,11 @@ export function validateScreenplay(value: unknown, targetSec: [number, number], 
     else if (c.gender !== "neutral" && voice.gender !== c.gender) errors.push(`character ${c.id} is ${c.gender} but voice ${c.voice.voiceId} is ${voice.gender}`);
   }
   if (new Set(sp.characters.map((c) => c.voice?.voiceId)).size !== sp.characters.length) errors.push("two characters share a voice");
+  for (const c of sp.characters) {
+    const contradiction = genderContradiction(c.gender, `${c.appearance} ${c.role}`);
+    if (contradiction) errors.push(`character ${c.id} is ${c.gender} but is described as "${contradiction}"; make gender and appearance agree`);
+    if (c.gender === "neutral" && sp.lines?.some((l) => l.speakerId === c.id && l.lipSync)) errors.push(`character ${c.id} speaks on camera (lipSync) so needs gender female or male, not neutral`);
+  }
 
   const lineIds = new Set(sp.lines.map((l) => l.id));
   for (const l of sp.lines) {

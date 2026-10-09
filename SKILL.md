@@ -48,16 +48,30 @@ Requests arrive in this order, because each stage depends on the last:
 ### 1. `screenplay` / `screenplay-fix`
 Write JSON to `path` following `instructions` exactly (they contain the writing rules and the allowed voice ids). `stories/dragon-cave.json` is a complete example of the shape. A `screenplay-fix` request lists `errors`; fix only those and save over the same file.
 
-Every character needs a `gender`, and its `voice.voiceId` must match it (`female_*` for female, `male_*` for male). Give each character a different voice id. Only set `lipSync: true` on a line when a human speaker's face is clearly on screen, and give every shot a `blocking` position for each visible character.
+Every character needs a `gender` (`female` or `male` for anyone who speaks on camera), and its `voice.voiceId` must match it (`female_*` for female, `male_*` for male). The `appearance` must agree: a woman is described as a woman. A mismatch is rejected. Give each character a different voice id. Only set `lipSync: true` on a line when a human speaker's face is clearly on screen, and give every shot a `blocking` position for each visible character.
 
-### 2. `voice`
-Generate speech for exactly `text`, as `character`, in a **`gender`** voice, with the given `emotion` and `style`. Save a mono WAV to `path` containing only that line: no music, no second speaker.
+### 2. `casting` / `casting-fix`: pick real voices BEFORE recording anything
+This is the step that stops a woman speaking with a man's voice. For every slot in `slots`, choose one of **your actual voices** and write `casting.json` at `path`:
 
-**One voice per voiceId:** the first time you voice e.g. `female_a`, note which of your voices you used and reuse that exact voice for every later line with `female_a`, in this film and in any retake.
+```json
+{ "female_a": { "museVoice": "<exact name of a woman's voice you have>", "gender": "female" },
+  "male_a":   { "museVoice": "<exact name of a man's voice you have>",   "gender": "male" } }
+```
 
-QC measures pitch. A female line that sounds male fails, and you'll be asked to redo just that line.
+Rules:
+- A `female_*` slot gets a voice that **sounds like a woman**. A `male_*` slot gets a voice that **sounds like a man**. Before choosing, listen to or check the voice; don't guess from its name.
+- Every slot gets a **different** `museVoice`.
+- After casting, a slot's voice never changes: not between lines, not in retakes, not in later re-runs.
 
-### 3. `shot`
+### 3. `voice`
+Each request names the character, their **gender** and the exact `museVoice` to use. Record exactly `text` with **that voice and no other**, with the given `emotion` and `style`. Save a mono WAV to `path` containing only that line: no music, no second speaker.
+
+Before saving, check: *is this character a woman? Then does this take sound like a woman?* (And the same for men.) If not, re-record.
+
+QC measures the pitch of every line. A female line under 165 Hz or a male line over 155 Hz fails, and so does a line that sounds different from that character's other lines. Failed lines are requested again.
+
+### 4. `shot`
+Each request says who is on screen (with gender) and whose voice is heard. Follow it literally; never let a woman's mouth move while a man's line plays, or the other way round.
 Generate a video clip from `prompt` (use `referenceImages` for the characters if they exist) and save an MP4 to `path`:
 - Vertical 9:16, at least `minDurationSec` long (longer is fine; the editor trims). Any audio in the clip is thrown away.
 - `mode: "lipsync"`: exactly one face in frame. Drive its mouth with the `drivingAudio` file if your video tool accepts audio.
@@ -66,6 +80,8 @@ Generate a video clip from `prompt` (use `referenceImages` for the characters if
 Don't add text, captions or watermarks to clips. The editor adds captions.
 
 ## After it finishes
+
+The only film you may show the user is `projects/<id>/final.mp4`, built by this repo. Never assemble, re-cut or re-voice it yourself, and never use the audio from your generated clips: that skips every voice check.
 
 Show the user `final.mp4` and summarise `qc-report.json` honestly:
 - `pass`: measured and fine.

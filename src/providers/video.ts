@@ -1,14 +1,14 @@
 import { config } from "../config.ts";
 import { ffmpeg } from "../ff.ts";
 import { handoffVideo } from "./handoff.ts";
-import type { RenderPlan, ScreenPosition, VideoCapabilities } from "../types.ts";
+import type { Character, RenderPlan, ScreenPosition, VideoCapabilities } from "../types.ts";
 
 /**
  * faceTracks is set for lip-sync shots: one audio track per visible face, bound by screen position.
  * Multi-person models (LongCat dual-audio, MultiTalk) take exactly this; never pass a mixed track.
  */
 export type VideoRequest = {
-  plan: RenderPlan; referenceImages: string[]; outPath: string;
+  plan: RenderPlan; referenceImages: string[]; outPath: string; characters: Character[];
   faceTracks: { characterId: string; position: ScreenPosition; audioPath: string }[];
 };
 
