@@ -1,8 +1,16 @@
 import { config } from "../config.ts";
 import { ffmpeg } from "../ff.ts";
-import type { RenderPlan, VideoCapabilities } from "../types.ts";
+import { handoffVideo } from "./handoff.ts";
+import type { RenderPlan, ScreenPosition, VideoCapabilities } from "../types.ts";
 
-export type VideoRequest = { plan: RenderPlan; referenceImages: string[]; dialogueAudioPath?: string; outPath: string };
+/**
+ * faceTracks is set for lip-sync shots: one audio track per visible face, bound by screen position.
+ * Multi-person models (LongCat dual-audio, MultiTalk) take exactly this; never pass a mixed track.
+ */
+export type VideoRequest = {
+  plan: RenderPlan; referenceImages: string[]; outPath: string;
+  faceTracks: { characterId: string; position: ScreenPosition; audioPath: string }[];
+};
 
 export type VideoProvider = {
   name: string;
@@ -18,7 +26,7 @@ export type VideoProvider = {
  */
 export const mockVideo: VideoProvider = {
   name: "mock-video",
-  capabilities: { maxDurationSec: 10, maxLipSyncSpeakers: 1, referenceImages: true, nativeAudio: false },
+  capabilities: { maxDurationSec: 10, maxLipSyncSpeakers: 1, perFaceAudio: true, referenceImages: true, nativeAudio: false },
   estimateUsd: () => 0,
   async generate({ plan, outPath }) {
     const { width, height, fps } = config.output;
@@ -31,4 +39,4 @@ export const mockVideo: VideoProvider = {
   },
 };
 
-export const videoFor = (_name: string): VideoProvider => mockVideo;
+export const videoFor = (name: string): VideoProvider => (name === "handoff" ? handoffVideo : mockVideo);

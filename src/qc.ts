@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { config } from "./config.ts";
+import { medianPitchHz, pcm, rms } from "./audio.ts";
 import { ffmpegStderr, probe } from "./ff.ts";
-import type { QcCheck, QcReport, RenderPlan } from "./types.ts";
+import type { QcCheck, QcReport, RenderPlan, Screenplay } from "./types.ts";
 
 const check = (name: string, ok: boolean, detail: string, shotId?: string): QcCheck => ({ name, status: ok ? "pass" : "fail", detail, shotId });
 const review = (name: string, detail: string, shotId?: string): QcCheck => ({ name, status: "needs_human_review", detail, shotId });
@@ -13,6 +14,7 @@ const review = (name: string, detail: string, shotId?: string): QcCheck => ({ na
  */
 export async function qualityCheck(opts: {
   projectId: string; finalPath: string; srtPath: string; plans: RenderPlan[]; shotPaths: string[];
+  faceTracks: { characterId: string; audioPath: string; position: string }[][]; screenplay: Screenplay;
   targetSec: [number, number]; providerName: string;
 }): Promise<QcReport> {
   const { width, height, fps } = config.output;
@@ -32,6 +34,8 @@ export async function qualityCheck(opts: {
   checks.push(check("loudness", Math.abs(loudness - config.loudnessLufs) <= 1.5, `${loudness} LUFS integrated, target ${config.loudnessLufs}`));
 
   const lines = opts.plans.flatMap((p) => p.lines);
+  const byId = new Map(opts.screenplay.characters.map((c) => [c.id, c]));
+  const names = new Map(opts.screenplay.characters.map((c) => [c.id, c.name]));
   const cues = (await readFile(opts.srtPath, "utf8")).trim().split(/\n\s*\n/);
   checks.push(check("caption_accuracy", cues.length === lines.length && lines.every((l, i) => cues[i].endsWith(l.text)), `${cues.length} cues for ${lines.length} lines, text matches script`));
 
@@ -41,7 +45,29 @@ export async function qualityCheck(opts: {
     checks.push(check("shot_duration", shot.durationSec >= plan.durationSec - 0.1, `${shot.durationSec.toFixed(2)}s rendered, ${plan.durationSec.toFixed(2)}s planned`, id));
     const end = plan.startSec + plan.durationSec;
     checks.push(check("dialogue_fits_shot", plan.lines.every((l) => l.startSec >= plan.startSec && l.startSec + l.durationSec <= end), "every line starts and ends inside its shot", id));
-    if (plan.mode === "lipsync") checks.push(review("lip_sync", `no automatic lip-sync scorer yet (SyncNet/LSE planned); provider ${opts.providerName}`, id));
+    if (plan.mode !== "lipsync") continue;
+
+    // Measured: each face track carries only its own character's lines and is silent while anyone else speaks.
+    const tracks = await Promise.all(opts.faceTracks[i].map(async (t) => ({ ...t, samples: await pcm(t.audioPath) })));
+    const wrong = plan.lines.filter((l) => l.lipSync).flatMap((l) => tracks.flatMap((t) => {
+      const level = rms(t.samples, l.startSec - plan.startSec, l.startSec - plan.startSec + l.durationSec);
+      const isSpeaker = t.characterId === l.speakerId;
+      return (isSpeaker ? level < 0.005 : level > 0.0005) ? [`${l.id} on ${t.characterId}'s face (${isSpeaker ? "missing" : "leaked"})`] : [];
+    }));
+    checks.push(check("speaker_binding", tracks.length > 0 && wrong.length === 0, wrong.length ? wrong.join("; ") : tracks.map((t) => `${t.characterId}@${t.position}`).join(", ") + ": audio only on the speaker's face", id));
+    const speakers = [...new Set(plan.lines.filter((l) => l.lipSync).map((l) => names.get(l.speakerId)))].join(", ");
+    checks.push(review("lip_sync", `confirm only ${speakers}'s mouth moves, in sync. Automatic scoring (SyncNet LSE, Light-ASD active speaker) not wired yet; provider ${opts.providerName}`, id));
+  }
+
+  // Measured: the voice that says each line sounds like the character's gender (pitch proxy).
+  for (const l of lines) {
+    const gender = byId.get(l.speakerId)!.gender;
+    if (gender === "neutral") continue;
+    const hz = medianPitchHz(await pcm(l.audioPath));
+    const ok = hz !== undefined && (gender === "female" ? hz >= 165 : hz <= 155);
+    const ambiguous = hz === undefined || (hz > 155 && hz < 165);
+    const detail = `${names.get(l.speakerId)} (${gender}) median pitch ${hz ? Math.round(hz) : "?"} Hz`;
+    checks.push(ambiguous ? review("voice_gender", detail, l.id) : check("voice_gender", ok, detail, l.id));
   }
 
   checks.push(review("character_consistency", "no automatic identity check yet (face/reference similarity planned)"));

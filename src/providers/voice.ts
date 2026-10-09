@@ -1,8 +1,11 @@
 import { exec, ffmpeg, probe } from "../ff.ts";
-import type { Character, DialogueLine } from "../types.ts";
+import type { Character, DialogueLine, Gender } from "../types.ts";
+import { handoffVoice } from "./handoff.ts";
 
 export type VoiceProvider = {
   name: string;
+  /** Every voice the provider offers, with the gender it sounds like. Screenplays may only use these. */
+  voices: Record<string, { gender: Gender }>;
   estimateUsd(text: string): number;
   synthesize(line: DialogueLine, speaker: Character, outPath: string): Promise<{ path: string; durationSec: number }>;
 };
@@ -13,6 +16,10 @@ export type VoiceProvider = {
  */
 export const mockVoice: VoiceProvider = {
   name: "mock-voice",
+  voices: {
+    Samantha: { gender: "female" }, Karen: { gender: "female" }, Kathy: { gender: "female" },
+    Ralph: { gender: "male" }, Daniel: { gender: "male" }, Fred: { gender: "male" }, Albert: { gender: "male" },
+  },
   estimateUsd: () => 0,
   async synthesize(line, speaker, outPath) {
     const raw = `${outPath}.aiff`;
@@ -27,4 +34,4 @@ export const mockVoice: VoiceProvider = {
   },
 };
 
-export const voiceFor = (_name: string): VoiceProvider => mockVoice;
+export const voiceFor = (name: string): VoiceProvider => (name === "handoff" ? handoffVoice : mockVoice);

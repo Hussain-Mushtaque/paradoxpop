@@ -3,3 +3,4 @@ projects/
 .env
 *.aiff
 .DS_Store
+.tools/

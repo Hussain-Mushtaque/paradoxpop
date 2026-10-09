@@ -9,44 +9,306 @@
     {
       "id": "mira",
       "name": "Mira",
+      "gender": "female",
       "role": "explorer, protagonist",
       "appearance": "woman, 19, olive skin, dark curly hair tied back, small scar through left eyebrow, brown eyes",
       "wardrobe": "rust-red wool cloak, leather satchel across chest, brass compass on a cord",
       "scale": "human, 1.65 m",
       "personality": "stubborn, scared but refuses to show it, speaks in short lines",
-      "voice": { "voiceId": "Samantha", "style": "steady, low, breath catching" },
-      "referenceImages": ["characters/mira/front.png", "characters/mira/three-quarter.png"],
-      "relationships": { "vael": "first meeting; he knows her, she does not know him" },
-      "continuity": ["torch in right hand until shot sh05", "map in left hand from sh05", "cloak hood down"]
+      "voice": {
+        "voiceId": "Samantha",
+        "style": "steady, low, breath catching"
+      },
+      "referenceImages": [
+        "characters/mira/front.png",
+        "characters/mira/three-quarter.png"
+      ],
+      "relationships": {
+        "vael": "first meeting; he knows her, she does not know him"
+      },
+      "continuity": [
+        "torch in right hand until shot sh05",
+        "map in left hand from sh05",
+        "cloak hood down"
+      ]
     },
     {
       "id": "vael",
       "name": "Vael",
+      "gender": "male",
       "role": "ancient dragon",
       "appearance": "obsidian-black scales with gold seams, single golden eye on the left, right eye scarred shut, horns like old tree roots",
       "wardrobe": "none",
       "scale": "head alone is 3x Mira's height",
       "personality": "weary, amused, secretly tender",
-      "voice": { "voiceId": "Ralph", "style": "slow, deep, every word deliberate" },
-      "referenceImages": ["characters/vael/head.png", "characters/vael/eye.png"],
-      "relationships": { "mira": "has watched over her family for generations" },
-      "continuity": ["only the left eye opens", "gold seams glow faintly when he speaks"]
+      "voice": {
+        "voiceId": "Ralph",
+        "style": "slow, deep, every word deliberate"
+      },
+      "referenceImages": [
+        "characters/vael/head.png",
+        "characters/vael/eye.png"
+      ],
+      "relationships": {
+        "mira": "has watched over her family for generations"
+      },
+      "continuity": [
+        "only the left eye opens",
+        "gold seams glow faintly when he speaks"
+      ]
     }
   ],
   "lines": [
-    { "id": "l1", "speakerId": "vael", "listenerId": "mira", "text": "Three hundred years. And they send me a child with a candle.", "emotion": "dry amusement", "style": "rumbling, from the dark", "speakerVisible": false, "lipSync": false, "listenerReaction": "Mira freezes, torch trembles, she does not step back" },
-    { "id": "l2", "speakerId": "mira", "listenerId": "vael", "text": "I'm not here for your gold.", "emotion": "fear held down", "style": "quiet, firm", "speakerVisible": true, "lipSync": true, "listenerReaction": "Vael's head slides out of the dark toward her" },
-    { "id": "l3", "speakerId": "vael", "listenerId": "mira", "text": "Everyone says that. Right before they reach for it.", "emotion": "weary contempt", "style": "slow, close", "speakerVisible": true, "lipSync": false, "listenerReaction": "Mira swallows, then reaches into her satchel" },
-    { "id": "l4", "speakerId": "mira", "listenerId": "vael", "text": "Then tell me why my village's map has your name on it.", "emotion": "defiant", "style": "rising, voice cracks on 'name'", "speakerVisible": true, "lipSync": true, "listenerReaction": "Vael goes completely still" },
-    { "id": "l5", "speakerId": "vael", "listenerId": "mira", "text": "Because I drew it. For you.", "emotion": "tender, a long-kept secret", "style": "almost a whisper", "speakerVisible": true, "lipSync": false, "listenerReaction": "Mira's torch gutters out" }
+    {
+      "id": "l1",
+      "speakerId": "vael",
+      "listenerId": "mira",
+      "text": "Three hundred years. And they send me a child with a candle.",
+      "emotion": "dry amusement",
+      "style": "rumbling, from the dark",
+      "speakerVisible": false,
+      "lipSync": false,
+      "listenerReaction": "Mira freezes, torch trembles, she does not step back"
+    },
+    {
+      "id": "l2",
+      "speakerId": "mira",
+      "listenerId": "vael",
+      "text": "I'm not here for your gold.",
+      "emotion": "fear held down",
+      "style": "quiet, firm",
+      "speakerVisible": true,
+      "lipSync": true,
+      "listenerReaction": "Vael's head slides out of the dark toward her"
+    },
+    {
+      "id": "l3",
+      "speakerId": "vael",
+      "listenerId": "mira",
+      "text": "Everyone says that. Right before they reach for it.",
+      "emotion": "weary contempt",
+      "style": "slow, close",
+      "speakerVisible": true,
+      "lipSync": false,
+      "listenerReaction": "Mira swallows, then reaches into her satchel"
+    },
+    {
+      "id": "l4",
+      "speakerId": "mira",
+      "listenerId": "vael",
+      "text": "Then tell me why my village's map has your name on it.",
+      "emotion": "defiant",
+      "style": "rising, voice cracks on 'name'",
+      "speakerVisible": true,
+      "lipSync": true,
+      "listenerReaction": "Vael goes completely still"
+    },
+    {
+      "id": "l5",
+      "speakerId": "vael",
+      "listenerId": "mira",
+      "text": "Because I drew it. For you.",
+      "emotion": "tender, a long-kept secret",
+      "style": "almost a whisper",
+      "speakerVisible": true,
+      "lipSync": false,
+      "listenerReaction": "Mira's torch gutters out"
+    }
   ],
   "shots": [
-    { "id": "sh01", "sceneId": "sc01", "kind": "insert", "durationSec": 2.5, "characterIds": ["vael"], "environment": "pitch-black cavern", "lighting": "darkness, then the eye's own gold glow", "camera": "extreme close-up, static, slow push-in", "action": "a colossal golden dragon eye opens, slit pupil contracts", "lineIds": [], "sfx": ["deep exhale rumble", "scales shifting"], "mood": "dread", "continuity": ["left eye"], "transitionIn": "fade" },
-    { "id": "sh02", "sceneId": "sc01", "kind": "wide", "durationSec": 4, "characterIds": ["mira"], "environment": "cavern floor covered in old gold coins", "lighting": "single warm torch, deep shadows", "camera": "wide, low angle, slow dolly-in", "action": "Mira steps onto the coins and freezes as the voice speaks", "lineIds": ["l1"], "sfx": ["coins clinking underfoot", "torch crackle"], "mood": "tension", "continuity": ["torch in right hand"], "transitionIn": "cut" },
-    { "id": "sh03", "sceneId": "sc01", "kind": "close-up", "durationSec": 3, "characterIds": ["mira"], "environment": "cavern", "lighting": "torch from below-right", "camera": "close-up, slight handheld", "action": "Mira speaks toward the dark", "lineIds": ["l2"], "sfx": ["torch crackle"], "mood": "defiance", "continuity": ["torch in right hand", "scar visible"], "transitionIn": "cut" },
-    { "id": "sh04", "sceneId": "sc01", "kind": "over-the-shoulder", "durationSec": 4, "characterIds": ["mira", "vael"], "environment": "cavern", "lighting": "torch, gold seams glowing", "camera": "over Mira's left shoulder, dragon head emerging from the dark", "action": "Vael's head slides into the light, jaw moves as he speaks", "lineIds": ["l3"], "sfx": ["heavy scrape of scales", "low growl under the line"], "mood": "threat", "continuity": ["Mira in left foreground, out of focus", "only left eye open"], "transitionIn": "cut" },
-    { "id": "sh05", "sceneId": "sc01", "kind": "medium", "durationSec": 4.5, "characterIds": ["mira"], "environment": "cavern", "lighting": "torch, gold reflections", "camera": "medium, eye level, static", "action": "Mira pulls a folded map from her satchel and holds it up", "lineIds": ["l4"], "sfx": ["paper unfolding"], "mood": "defiance", "continuity": ["map now in left hand", "torch in right hand"], "transitionIn": "cut" },
-    { "id": "sh06", "sceneId": "sc01", "kind": "close-up", "durationSec": 3.5, "characterIds": ["vael"], "environment": "cavern", "lighting": "gold seams pulse once", "camera": "close-up on Vael's face, very slow push-in", "action": "Vael lowers his head to Mira's level and speaks softly", "lineIds": ["l5"], "sfx": ["breath"], "mood": "revelation", "continuity": ["only left eye open"], "transitionIn": "cut" },
-    { "id": "sh07", "sceneId": "sc01", "kind": "reaction", "durationSec": 3, "characterIds": ["mira"], "environment": "cavern", "lighting": "torch flickers and dies to black", "camera": "close-up, static", "action": "Mira's face, stunned; the torch gutters out", "lineIds": [], "sfx": ["torch dying hiss", "distant roar echo"], "mood": "cliffhanger", "continuity": ["map still in left hand"], "transitionIn": "cut" }
+    {
+      "id": "sh01",
+      "sceneId": "sc01",
+      "kind": "insert",
+      "durationSec": 2.5,
+      "characterIds": [
+        "vael"
+      ],
+      "environment": "pitch-black cavern",
+      "lighting": "darkness, then the eye's own gold glow",
+      "camera": "extreme close-up, static, slow push-in",
+      "action": "a colossal golden dragon eye opens, slit pupil contracts",
+      "lineIds": [],
+      "sfx": [
+        "deep exhale rumble",
+        "scales shifting"
+      ],
+      "mood": "dread",
+      "continuity": [
+        "left eye"
+      ],
+      "transitionIn": "fade",
+      "blocking": {
+        "vael": "center"
+      }
+    },
+    {
+      "id": "sh02",
+      "sceneId": "sc01",
+      "kind": "wide",
+      "durationSec": 4,
+      "characterIds": [
+        "mira"
+      ],
+      "environment": "cavern floor covered in old gold coins",
+      "lighting": "single warm torch, deep shadows",
+      "camera": "wide, low angle, slow dolly-in",
+      "action": "Mira steps onto the coins and freezes as the voice speaks",
+      "lineIds": [
+        "l1"
+      ],
+      "sfx": [
+        "coins clinking underfoot",
+        "torch crackle"
+      ],
+      "mood": "tension",
+      "continuity": [
+        "torch in right hand"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "mira": "center"
+      }
+    },
+    {
+      "id": "sh03",
+      "sceneId": "sc01",
+      "kind": "close-up",
+      "durationSec": 3,
+      "characterIds": [
+        "mira"
+      ],
+      "environment": "cavern",
+      "lighting": "torch from below-right",
+      "camera": "close-up, slight handheld",
+      "action": "Mira speaks toward the dark",
+      "lineIds": [
+        "l2"
+      ],
+      "sfx": [
+        "torch crackle"
+      ],
+      "mood": "defiance",
+      "continuity": [
+        "torch in right hand",
+        "scar visible"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "mira": "center"
+      }
+    },
+    {
+      "id": "sh04",
+      "sceneId": "sc01",
+      "kind": "over-the-shoulder",
+      "durationSec": 4,
+      "characterIds": [
+        "mira",
+        "vael"
+      ],
+      "environment": "cavern",
+      "lighting": "torch, gold seams glowing",
+      "camera": "over Mira's left shoulder, dragon head emerging from the dark",
+      "action": "Vael's head slides into the light, jaw moves as he speaks",
+      "lineIds": [
+        "l3"
+      ],
+      "sfx": [
+        "heavy scrape of scales",
+        "low growl under the line"
+      ],
+      "mood": "threat",
+      "continuity": [
+        "Mira in left foreground, out of focus",
+        "only left eye open"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "mira": "left",
+        "vael": "right"
+      }
+    },
+    {
+      "id": "sh05",
+      "sceneId": "sc01",
+      "kind": "medium",
+      "durationSec": 4.5,
+      "characterIds": [
+        "mira"
+      ],
+      "environment": "cavern",
+      "lighting": "torch, gold reflections",
+      "camera": "medium, eye level, static",
+      "action": "Mira pulls a folded map from her satchel and holds it up",
+      "lineIds": [
+        "l4"
+      ],
+      "sfx": [
+        "paper unfolding"
+      ],
+      "mood": "defiance",
+      "continuity": [
+        "map now in left hand",
+        "torch in right hand"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "mira": "center"
+      }
+    },
+    {
+      "id": "sh06",
+      "sceneId": "sc01",
+      "kind": "close-up",
+      "durationSec": 3.5,
+      "characterIds": [
+        "vael"
+      ],
+      "environment": "cavern",
+      "lighting": "gold seams pulse once",
+      "camera": "close-up on Vael's face, very slow push-in",
+      "action": "Vael lowers his head to Mira's level and speaks softly",
+      "lineIds": [
+        "l5"
+      ],
+      "sfx": [
+        "breath"
+      ],
+      "mood": "revelation",
+      "continuity": [
+        "only left eye open"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "vael": "center"
+      }
+    },
+    {
+      "id": "sh07",
+      "sceneId": "sc01",
+      "kind": "reaction",
+      "durationSec": 3,
+      "characterIds": [
+        "mira"
+      ],
+      "environment": "cavern",
+      "lighting": "torch flickers and dies to black",
+      "camera": "close-up, static",
+      "action": "Mira's face, stunned; the torch gutters out",
+      "lineIds": [],
+      "sfx": [
+        "torch dying hiss",
+        "distant roar echo"
+      ],
+      "mood": "cliffhanger",
+      "continuity": [
+        "map still in left hand"
+      ],
+      "transitionIn": "cut",
+      "blocking": {
+        "mira": "center"
+      }
+    }
   ]
 }

@@ -1,6 +1,10 @@
+export type Gender = "female" | "male" | "neutral";
+
 export type Character = {
   id: string;
   name: string;
+  /** Drives both the generated face and the voice; voice must match it. "neutral" skips the pitch check. */
+  gender: Gender;
   role: string;
   appearance: string;
   wardrobe: string;
@@ -41,7 +45,14 @@ export type Shot = {
   mood: string;
   continuity: string[];
   transitionIn: "cut" | "fade";
+  /** Where each visible character's face is in frame. Required for lip-sync so audio binds to the right face. */
+  blocking?: Record<string, ScreenPosition>;
 };
+
+export type ScreenPosition = "left" | "center" | "right";
+
+/** One per visible face in a lip-sync shot: the speaker's own lines, silence for everyone else. */
+export type FaceBinding = { characterId: string; position: ScreenPosition; lineIds: string[] };
 
 export type Screenplay = {
   title: string;
@@ -63,6 +74,7 @@ export type RenderPlan = {
   durationSec: number;
   lines: TimedLine[];
   mode: "lipsync" | "voiceover" | "silent";
+  faces: FaceBinding[];
   prompt: string;
   notes: string[];
 };
@@ -70,6 +82,8 @@ export type RenderPlan = {
 export type VideoCapabilities = {
   maxDurationSec: number;
   maxLipSyncSpeakers: number;
+  /** Can drive each face with its own audio track. Without it, a lip-sync shot may contain only one face. */
+  perFaceAudio: boolean;
   referenceImages: boolean;
   nativeAudio: boolean;
 };

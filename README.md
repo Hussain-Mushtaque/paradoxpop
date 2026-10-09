@@ -17,6 +17,10 @@ Options: `--project <id>`, `--idea "<text>"`, `--target 70-80`, `--approve` (all
 
 Outputs in `projects/<id>/`: `screenplay.json`, `audio/`, `shots/`, `final.mp4`, `final.srt`, `qc-report.json`. Metadata, jobs and spend are in `projects/paradoxpop.db`.
 
+## Using it from Muse
+
+Muse runs this repo on its own VM by following [`SKILL.md`](SKILL.md): the pipeline lists the screenplay, voice lines and clips it needs, Muse makes them, and the pipeline validates, assembles and QCs. See [Architecture: Muse integration](docs/architecture.md#muse-integration).
+
 ## Docs
 
 - [Repository evaluation](docs/research.md): ranked picks, verified licences

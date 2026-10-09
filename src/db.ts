@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { log } from "./log.ts";
+import { AwaitingInput } from "./providers/handoff.ts";
 
 export type Store = ReturnType<typeof openStore>;
 
@@ -67,6 +68,10 @@ export function openStore(path: string) {
           return output;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
+          if (error instanceof AwaitingInput) {
+            db.prepare("UPDATE jobs SET status = 'waiting', error = ?, updated_at = ? WHERE key = ?").run(message, now(), key);
+            throw error;
+          }
           db.prepare("UPDATE jobs SET status = 'failed', error = ?, attempts = ?, updated_at = ? WHERE key = ?").run(message, attempt, now(), key);
           log("warn", "job failed", { stage: opts.stage, provider: opts.provider, attempt, error: message });
           if (attempt > retries) throw error;

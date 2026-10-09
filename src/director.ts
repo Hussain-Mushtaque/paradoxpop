@@ -32,27 +32,38 @@ export function direct(sp: Screenplay, voiced: Map<string, { audioPath: string; 
     if (durationSec > caps.maxDurationSec) notes.push(`exceeds provider max ${caps.maxDurationSec}s`);
 
     const lipSyncSpeakers = new Set(lines.filter((l) => l.lipSync && l.speakerVisible).map((l) => l.speakerId));
+    const unplaced = shot.characterIds.filter((id) => !shot.blocking?.[id]);
+    const sharedFrame = !caps.perFaceAudio && shot.characterIds.length > 1;
     let mode: RenderPlan["mode"] = lines.length ? "voiceover" : "silent";
-    if (lipSyncSpeakers.size > 0 && lipSyncSpeakers.size <= caps.maxLipSyncSpeakers) mode = "lipsync";
+    if (lipSyncSpeakers.size > 0 && lipSyncSpeakers.size <= caps.maxLipSyncSpeakers && unplaced.length === 0 && !sharedFrame) mode = "lipsync";
     else if (lipSyncSpeakers.size > 0) {
-      notes.push(`provider lip-syncs ${caps.maxLipSyncSpeakers} speaker(s), shot needs ${lipSyncSpeakers.size}: reframed as voice-over`);
+      notes.push(unplaced.length
+        ? `no screen position for ${unplaced.join(", ")}: can't bind audio to the right face, reframed as voice-over`
+        : sharedFrame
+          ? `provider can't give each face its own audio and ${shot.characterIds.length} faces are in frame (wrong mouth could move): reframed as voice-over`
+          : `provider lip-syncs ${caps.maxLipSyncSpeakers} speaker(s), shot needs ${lipSyncSpeakers.size}: reframed as voice-over`);
       for (const l of lines) l.lipSync = false;
     }
+    // Every visible face gets a track: its own lip-synced lines, silence otherwise, so a listener's mouth never moves to someone else's voice.
+    const faces = mode === "lipsync"
+      ? shot.characterIds.map((id) => ({ characterId: id, position: shot.blocking![id], lineIds: lines.filter((l) => l.speakerId === id && l.lipSync).map((l) => l.id) }))
+      : [];
 
-    const cast = shot.characterIds.map((id) => byId.get(id)!).map((c) => `${c.name} (${c.appearance}; ${c.wardrobe}; ${c.scale})`).join(". ");
+    const cast = shot.characterIds.map((id) => byId.get(id)!).map((c) => `${c.name}${shot.blocking?.[c.id] ? ` at frame ${shot.blocking[c.id]}` : ""} (${c.gender}, ${c.appearance}; ${c.wardrobe}; ${c.scale})`).join(". ");
     const speech = lines.map((l) => {
       const who = byId.get(l.speakerId)!.name;
       if (mode === "lipsync" && l.lipSync) return `${who} speaks on camera, ${l.emotion}: "${l.text}"`;
       return `${who} is heard${l.speakerVisible ? "" : " off-screen"}, mouth not visible to camera; ${byId.get(l.listenerId)!.name} reacts: ${l.listenerReaction}`;
     }).join(" ");
+    const listeners = faces.filter((f) => f.lineIds.length === 0).map((f) => `${byId.get(f.characterId)!.name} listens with mouth closed.`).join(" ");
     const prompt = [
       `${shot.kind} shot, ${shot.camera}.`, shot.action + ".", cast + ".",
-      `${shot.environment}, ${shot.lighting}, mood: ${shot.mood}.`, speech,
+      `${shot.environment}, ${shot.lighting}, mood: ${shot.mood}.`, speech, listeners,
       shot.continuity.length ? `Continuity: ${shot.continuity.join("; ")}.` : "",
       "Vertical 9:16, photoreal cinematic, anamorphic film look, natural motion, no text on screen.",
     ].filter(Boolean).join(" ");
 
-    const plan: RenderPlan = { shot, startSec: clock, durationSec, lines, mode, prompt, notes };
+    const plan: RenderPlan = { shot, startSec: clock, durationSec, lines, mode, faces, prompt, notes };
     clock += durationSec;
     return plan;
   });

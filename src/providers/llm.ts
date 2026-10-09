@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { config } from "../config.ts";
+import { fileLlm } from "./handoff.ts";
 
 export type LlmProvider = {
   name: string;
@@ -49,4 +50,5 @@ export function metaLlm(model = config.llmModel): LlmProvider {
   };
 }
 
-export const llmFor = (name: string): LlmProvider => (name === "meta" ? metaLlm() : mockLlm);
+export const llmFor = (name: string, screenplayInput: string): LlmProvider =>
+  name === "meta" ? metaLlm() : name === "file" ? fileLlm(screenplayInput) : mockLlm;
