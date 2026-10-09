@@ -67,7 +67,7 @@ Muse already generates clips and speech. The repo adds what it lacks: a validate
 3. Muse produces every requested file at its path and runs the command again.
 4. QC failures (e.g. a male-sounding take on a female character) delete only that file, and the next run requests it again.
 
-Muse's VM is CPU-only (2 cores, 8 GB, Ubuntu, no root), so `scripts/setup-linux.sh` installs Node 24 and a static FFmpeg in `./.tools`. Verified in an `ubuntu:24.04` container as a non-root user: the full loop finished with a 24.6 s, 1080x1920, -14 LUFS film. Muse clones the private repo with a read-only token from its Secure Credentials Store.
+Muse's VM is CPU-only (2 cores, 8 GB, Ubuntu, no root), so `scripts/setup-linux.sh` installs Node 24 and a static FFmpeg in `./.tools`. Verified in an `ubuntu:24.04` container as a non-root user: the full loop finished with a 24.6 s, 1080x1920, -14 LUFS film. Muse clones the public repo; no credentials involved.
 
 Because Muse's clips can't take a separate audio track per face, lip-sync is only allowed with **one face in frame**. Two-person shots are planned as over-the-shoulder, off-screen or reaction shots, so the wrong mouth never moves (`perFaceAudio: false` in `providers/handoff.ts`).
 

@@ -10,11 +10,13 @@ You (Muse) are the writer, voice actor and camera. This repo is the director and
 ## Setup (once per VM)
 
 ```bash
-git clone https://x-access-token:$PARADOXPOP_GITHUB_TOKEN@github.com/Hussain-Mushtaque/paradoxpop.git ~/paradoxpop
+git clone https://github.com/Hussain-Mushtaque/paradoxpop.git ~/paradoxpop
 cd ~/paradoxpop && ./scripts/setup-linux.sh
 ```
 
-`PARADOXPOP_GITHUB_TOKEN` comes from the Secure Credentials Store (read-only token for this repo). Never print it, never write it to a file. Later updates: `git -C ~/paradoxpop pull`.
+The repo is public; no token is needed. Before every film run `git -C ~/paradoxpop pull` to get the latest rules.
+
+**ParadoxPop films are only made through this repo.** If the clone, setup or a run fails, stop and tell the user what failed. Never fall back to making the film on your own: that skips the voice and lip checks.
 
 ## Step 0: decide what to make (your call)
 
