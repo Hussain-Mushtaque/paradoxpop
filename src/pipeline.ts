@@ -99,6 +99,7 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
   // 3. Direct: timing, lip-sync feasibility, prompts.
   const plans = direct(sp, voiced, video.capabilities);
   store.saveDoc(opts.projectId, "render-plan", plans);
+  await writeFile(join(dir, "render-plan.json"), JSON.stringify(plans, null, 2));
   for (const p of plans) for (const note of p.notes) log("info", "director", { shot: p.shot.id, note });
 
   const estimate = plans.reduce((sum, p) => sum + video.estimateUsd(p), 0);

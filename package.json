@@ -7,6 +7,7 @@
   },
   "scripts": {
     "make": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/cli.ts",
+    "lipsync": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/lipsync.ts",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
