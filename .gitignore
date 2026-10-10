@@ -4,3 +4,4 @@ projects/
 *.aiff
 .DS_Store
 .tools/
+__pycache__/

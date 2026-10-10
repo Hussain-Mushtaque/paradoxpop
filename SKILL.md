@@ -16,6 +16,16 @@ cd ~/paradoxpop && ./scripts/setup-linux.sh
 
 The repo is public; no token is needed. Before every film run `git -C ~/paradoxpop pull` to get the latest rules.
 
+### Lip-sync repair (once per VM)
+
+Your video tool can't hear our dialogue, so the repo re-animates each lip-sync close-up to its real voice line on a free Kaggle GPU. It needs a Kaggle token. If `~/.kaggle/access_token` doesn't exist, ask the user for their Kaggle API token once, then save it without printing it:
+
+```bash
+mkdir -p ~/.kaggle && (umask 077 && printf '%s' "<token>" > ~/.kaggle/access_token)
+```
+
+Never echo, log, commit or repeat the token. If the user declines, leave out `PARADOXPOP_LIPSYNC=kaggle` below and tell them the close-ups won't be lip-synced.
+
 **ParadoxPop films are only made through this repo.** If the clone, setup or a run fails, stop and tell the user what failed. Never fall back to making the film on your own: that skips the voice and lip checks.
 
 ## Step 0: decide what to make (your call)
@@ -35,11 +45,13 @@ Run this from `~/paradoxpop` with a lowercase project id, e.g. `kitchen-argument
 
 ```bash
 export PATH="$HOME/paradoxpop/.tools/bin:$PATH"
-PARADOXPOP_LLM=file PARADOXPOP_VOICE=handoff PARADOXPOP_VIDEO=handoff \
+PARADOXPOP_LLM=file PARADOXPOP_VOICE=handoff PARADOXPOP_VIDEO=handoff PARADOXPOP_LIPSYNC=kaggle \
   node --disable-warning=ExperimentalWarning src/cli.ts --project <id> --idea "<your concept>" --target <min-max>
 ```
 
 Use the same `--idea` and `--target` on every re-run of a project.
+
+Once all shots are in, the lip-sync repair runs on Kaggle before assembly. It can take up to an hour (mostly waiting for a free GPU), so run the command in the background and check on it rather than killing it. Repaired shots are cached, so re-runs only repair shots that changed. If the repair fails, the film is still assembled from the original shots and the log says `lip-sync repair failed`; tell the user.
 
 - **Exit code 3** means it's waiting for files. Read `projects/<id>/handoff.json`, produce **every** request in it, save each to its exact `path`, then run the same command again.
 - **Exit code 0** means finished: `projects/<id>/final.mp4`, `final.srt` and `qc-report.json`.
@@ -76,7 +88,7 @@ QC measures the pitch of every line. A female line under 165 Hz or a male line o
 Each request says who is on screen (with gender) and whose voice is heard. Follow it literally; never let a woman's mouth move while a man's line plays, or the other way round.
 Generate a video clip from `prompt` (use `referenceImages` for the characters if they exist) and save an MP4 to `path`:
 - Vertical 9:16, at least `minDurationSec` long (longer is fine; the editor trims). Any audio in the clip is thrown away.
-- `mode: "lipsync"`: exactly one face in frame. Drive its mouth with the `drivingAudio` file if your video tool accepts audio.
+- `mode: "lipsync"`: exactly one face in frame, front-on or three-quarter, mouth clearly visible (no food, hands or mic in front of it). The repair redraws the largest face's mouth, so a second face would be animated wrongly. Drive its mouth with the `drivingAudio` file if your video tool accepts audio.
 - `mode: "voiceover"` or `"silent"`: **nobody's mouth moves on camera.** Speakers are off-screen, turned away or seen from behind, and listeners keep their mouths closed. This is deliberate: it's how two-person scenes avoid the wrong mouth moving.
 
 Don't add text, captions or watermarks to clips. The editor adds captions.

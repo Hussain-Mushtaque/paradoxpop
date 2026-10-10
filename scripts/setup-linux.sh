@@ -19,5 +19,11 @@ if ! command -v ffmpeg >/dev/null; then
   curl -fsSL "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-${ff_arch}-static.tar.xz" | tar -xJ -C .tools
   for bin in ffmpeg ffprobe; do ln -sf "$(ls -d "$PWD"/.tools/ffmpeg-*-static)/$bin" ".tools/bin/$bin"; done
 fi
+# Kaggle CLI for the free-GPU lip-sync repair; uv brings its own Python, so no root or system pip is touched.
+if ! command -v kaggle >/dev/null; then
+  command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$PWD/.tools/bin" INSTALLER_NO_MODIFY_PATH=1 sh
+  UV_TOOL_DIR="$PWD/.tools/uv-tools" UV_TOOL_BIN_DIR="$PWD/.tools/bin" uv tool install -q kaggle
+fi
 node --version
 ffmpeg -version | head -1
+kaggle --version

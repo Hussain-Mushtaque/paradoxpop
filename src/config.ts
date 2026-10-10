@@ -9,6 +9,7 @@ export const config = {
   llmModel: process.env.PARADOXPOP_LLM_MODEL ?? "muse-spark-1.3",
   voice: process.env.PARADOXPOP_VOICE ?? "mock",
   video: process.env.PARADOXPOP_VIDEO ?? "mock",
+  lipsync: process.env.PARADOXPOP_LIPSYNC ?? "off",
   budgetUsd: num("PARADOXPOP_BUDGET_USD", 5),
   approvalThresholdUsd: num("PARADOXPOP_APPROVAL_THRESHOLD_USD", 1),
   output: { width: 1080, height: 1920, fps: 24 },

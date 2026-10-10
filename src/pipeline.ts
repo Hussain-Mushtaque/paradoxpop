@@ -6,6 +6,7 @@ import { buildFaceTracks } from "./audio.ts";
 import { config } from "./config.ts";
 import { openStore } from "./db.ts";
 import { direct } from "./director.ts";
+import { syncLipSyncShots } from "./lipsync.ts";
 import { log } from "./log.ts";
 import { AwaitingInput, requireCasting, type Casting } from "./providers/handoff.ts";
 import { llmFor } from "./providers/llm.ts";
@@ -124,7 +125,8 @@ export async function runProject(opts: RunOptions): Promise<RunResult> {
   // 5. Assemble and QC. A failed shot or voice check re-does only that shot or line, not the whole film.
   const finalPath = join(dir, "final.mp4");
   const srtPath = join(dir, "final.srt");
-  const assembleAndCheck = async (shotPaths: string[]) => {
+  const assembleAndCheck = async (rendered: string[]) => {
+    const shotPaths = config.lipsync === "kaggle" ? await syncLipSyncShots(plans, rendered, faceTracks, dir) : rendered;
     await assemble(plans, shotPaths, sp, finalPath, srtPath);
     return qualityCheck({ projectId: opts.projectId, finalPath, srtPath, plans, shotPaths, faceTracks, screenplay: sp, targetSec: opts.targetSec, providerName: video.name });
   };
